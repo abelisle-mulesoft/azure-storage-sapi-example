@@ -1,0 +1,17 @@
+#%RAML 1.0
+title: Azure Storage System API
+mediaType:
+  - application/json
+/block-blobs:
+  post:
+    displayName: Creates a block blob
+    description: Creates a block blob in Azure Storage to store the provided content as-is.
+    body:
+      type: object
+      example: {}
+    responses:
+      "201":
+        description: Block blob created successfully
+        body:
+          type: object
+          example: {}
