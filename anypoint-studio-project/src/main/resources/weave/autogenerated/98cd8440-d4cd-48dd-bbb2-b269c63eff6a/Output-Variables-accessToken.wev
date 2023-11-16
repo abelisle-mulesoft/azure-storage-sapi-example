@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_98cd8440_d4cd_48dd_bbb2_b269c63eff6a_Output_Variables_accessToken = String
+

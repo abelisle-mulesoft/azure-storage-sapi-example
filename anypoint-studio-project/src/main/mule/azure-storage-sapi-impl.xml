@@ -1,16 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-	<flow name="azure-storage-sapi-impl-flow" doc:id="c7aee643-abf2-4628-9729-b4a03cb0d8dd" >
-		<ee:transform doc:name="Transform Message" doc:id="63e1989b-20ca-42c7-b5a5-2bc02ff1e807">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="post-block-blob-impl-flow" doc:id="c7aee643-abf2-4628-9729-b4a03cb0d8dd" >
+		<logger level="TRACE" doc:name="Trace - Copying payload to variable" doc:id="b3fa5801-b2f0-4e1b-ba78-b508f744c8a7" message="Copying payload to variable"/>
+		<set-variable value="#[payload]" doc:name="blobContent" doc:id="f5bb97e9-67e0-4ff5-8c72-19ab991099f8" variableName="blobContent" mimeType="application/json"/>
+		<flow-ref doc:name="get-access-token-flow" doc:id="5a04e27d-960a-42f3-b6a2-ffb3f9c90099" name="get-access-token-flow" />
+		<logger level="TRACE" doc:name="Trace - Creating blob name" doc:id="750610ca-82c9-4bc8-9701-a848012f7b57" message="Creating blob name"/>
+		<ee:transform doc:name="Create blob name" doc:id="333a980a-3e08-4b79-ab65-c0136f23d759" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="blobName" ><![CDATA[%dw 2.0
+output application/java
+var timestamp = now() as String {format: "uuuuMMdd-HHmmssSSS"}
 ---
-{}]]></ee:set-payload>
+"blob-" ++ timestamp ++ ".json"
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="TRACE" doc:name="Trace - Creating block blob in Azure Storage" doc:id="31efc451-c139-4ff2-9a5d-636c92421445" message="#['Creating block blob $(vars.blobName) in Azure Storage container ${azure.storage.container}']" />
+		<http:request method="PUT" doc:name="Create block blob in Azure Storage" doc:id="dc089da7-de3e-4c28-89f1-bd4211beca4e" config-ref="Azure_Storage_HTTP_Request_Config" path='#["/${azure.storage.container}/$(vars.blobName)"]' sendBodyMode="AUTO" outputMimeType="application/json">
+			<http:body ><![CDATA[#[vars.blobContent]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Length" : sizeOf(vars.blobContent.^raw),
+	"Authorization" : "Bearer " ++ vars.accessToken,
+	"x-ms-version" : "${azure.api_version}",
+	"x-ms-blob-type" : "BlockBlob"
+}]]]></http:headers>
+		</http:request>
+		<logger level="TRACE" doc:name="Trace - Successfully created block blob" doc:id="d0dd3302-bf04-4402-ac4b-335764789242" message="Trace - Successfully created block blob in Azure Storage"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="dceed0ea-fa98-4c65-a31b-b47f0c9cde2b" >
+				<logger level="ERROR" doc:name="Error - Log entire error payload" doc:id="664355d1-0c1e-446e-860a-5eb6fa0f7d60" message="#[output application/json --- error.errorMessage.payload]" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="get-access-token-flow" doc:id="98cd8440-d4cd-48dd-bbb2-b269c63eff6a" >
+		<logger level="TRACE" doc:name="Trace - Getting access token" doc:id="d742fa2f-b68b-4653-8466-726848783e10" message="Getting access token from Microsoft Entra ID" />
+		<ee:transform doc:name="Create Entra ID request" doc:id="a869f13c-2c33-4557-aba4-4f46672bc3c9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	resource:      "${azure.storage.resource_id}",
+	grant_type:    "client_credentials",
+	client_id:     "${entra_id.client_id}",
+	client_secret: "${entra_id.client_secret}"
+}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<http:request method="POST" doc:name="Get access token from Entra ID" doc:id="b2e22eec-68d2-42f5-9603-92fc7d171853" config-ref="Entra_ID_HTTP_Request_Config" path="/" />
+		<set-variable value="#[payload.access_token]" doc:name="accessToken" doc:id="d10688b6-04fc-462d-9607-ec4b20643153" variableName="accessToken" />
+		<logger level="TRACE" doc:name="Trace - Successfully got access token" doc:id="597831b6-2297-4685-8dd1-ad81003b635c" message="Successfully got access token from Microsoft Entra ID" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ff12bced-a1e9-491a-80e6-da529c6e8dfa" >
+				<logger level="ERROR" doc:name="Error - Log entire error payload" doc:id="23b513aa-d342-4612-9d0c-5944acab9b70" message="#[output application/json --- error.errorMessage.payload]"/>
+			</on-error-propagate>
+		</error-handler>
 	</flow>
 </mule>

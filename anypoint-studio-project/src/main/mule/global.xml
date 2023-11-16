@@ -8,4 +8,10 @@
     </http:listener-config>
     <global-property doc:name="Global Property" doc:id="18abd3b2-85f1-4d53-9691-1353fcd558fb" name="env" value="dev" />
     <configuration-properties doc:name="Configuration properties" doc:id="248ad9ff-1449-41e5-b607-c7b3c4266a2f" file="properties/mule-props-${env}.yaml" />
+	<http:request-config name="Entra_ID_HTTP_Request_Config" doc:name="HTTP Request configuration" doc:id="aa08673d-8da0-4630-870f-bac76be12be8" basePath="${entra_id.base_path}" >
+		<http:request-connection protocol="${entra_id.protocol}" host="${entra_id.host}" port="${entra_id.port}" usePersistentConnections="false" />
+	</http:request-config>
+	<http:request-config name="Azure_Storage_HTTP_Request_Config" doc:name="HTTP Request configuration" doc:id="95f43874-d64d-474a-a0a8-3e2b0cfb0097" basePath="${azure.base_path}" >
+		<http:request-connection protocol="${azure.protocol}" host="${azure.host}" port="${azure.port}" />
+	</http:request-config>
 </mule>

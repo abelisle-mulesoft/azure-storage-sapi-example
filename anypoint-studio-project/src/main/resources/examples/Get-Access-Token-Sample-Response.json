@@ -1,0 +1,9 @@
+{
+  "token_type": "Bearer",
+  "expires_in": "3600",
+  "ext_expires_in": "3600",
+  "expires_on": "170016000",
+  "not_before": "170015600",
+  "resource": "https://storage.azure.com/",
+  "access_token": "###oath2.0token###"
+}
