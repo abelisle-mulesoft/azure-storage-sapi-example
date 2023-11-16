@@ -1,0 +1,238 @@
+{
+	"info": {
+		"_postman_id": "7c64120d-755e-4697-88a1-7fa4b0ca7e3c",
+		"name": "Azure Storage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "16873374"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Get Access Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "{{client-Id}}",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{client-secret}}",
+									"type": "text"
+								},
+								{
+									"key": "resource",
+									"value": "https://storage.azure.com/",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://login.microsoftonline.com/{{tenant-id}}/oauth2/token",
+							"protocol": "https",
+							"host": [
+								"login",
+								"microsoftonline",
+								"com"
+							],
+							"path": [
+								"{{tenant-id}}",
+								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Blob Storage",
+			"item": [
+				{
+					"name": "List Blobs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access-token}}",
+								"type": "text"
+							},
+							{
+								"key": "x-ms-version",
+								"value": "2021-12-02",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{storage-account}}.blob.core.windows.net/contact-data?restype=container&comp=list",
+							"protocol": "https",
+							"host": [
+								"{{storage-account}}",
+								"blob",
+								"core",
+								"windows",
+								"net"
+							],
+							"path": [
+								"contact-data"
+							],
+							"query": [
+								{
+									"key": "restype",
+									"value": "container"
+								},
+								{
+									"key": "comp",
+									"value": "list"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Blob",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access-token}}",
+								"type": "text"
+							},
+							{
+								"key": "x-ms-version",
+								"value": "2021-12-02",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{storage-account}}.blob.core.windows.net/contact-data/blob01.json",
+							"protocol": "https",
+							"host": [
+								"{{storage-account}}",
+								"blob",
+								"core",
+								"windows",
+								"net"
+							],
+							"path": [
+								"contact-data",
+								"blob01.json"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Block Blob",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access-token}}",
+								"type": "text"
+							},
+							{
+								"key": "x-ms-version",
+								"value": "2021-12-02",
+								"type": "text"
+							},
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"101\",\n  \"firstName\": \"Emily\",\n  \"lastName\": \"Smith\",\n  \"email\": \"emily.smith@tinyurl.com\",\n  \"addressStreet\": \"912 Fulton Place\",\n  \"addressCity\": \"Kalamazoo\",\n  \"addressState\": \"MI\",\n  \"addressZip\": \"49048\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{storage-account}}.blob.core.windows.net/contact-data/blob01.json",
+							"protocol": "https",
+							"host": [
+								"{{storage-account}}",
+								"blob",
+								"core",
+								"windows",
+								"net"
+							],
+							"path": [
+								"contact-data",
+								"blob01.json"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "storage-account",
+			"value": "<storage-account-name>"
+		},
+		{
+			"key": "access-token",
+			"value": "<access-token>"
+		},
+		{
+			"key": "tenant-id",
+			"value": "<tenant-id>",
+			"type": "string"
+		},
+		{
+			"key": "client-Id",
+			"value": "<client-id>"
+		},
+		{
+			"key": "client-secret",
+			"value": "<client-secret>"
+		}
+	]
+}
