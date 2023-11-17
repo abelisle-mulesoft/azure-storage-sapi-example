@@ -1,0 +1,14 @@
+{
+  "dateTime": "2023-01-01T08:00:00.000-08:00",
+  "httpStatus": "500",
+  "errorMessage": "Operation failed (see responseDetails for more information)",
+  "errorType": "VALIDATION_FAILED",
+  "responseStatus": "ERROR",
+  "responseDetails": [
+    {
+      "severity": "ERROR",
+      "code": "EFBIG",
+      "message": "An abnormal condition occurred"
+    }
+  ]
+}
