@@ -374,7 +374,6 @@ Click **Home** in the breadcrumbs (upper left corner) to return to the Azure Por
 As discussed in the Introduction section, I built the Mule application to discuss and demo how to integrate with Azure Storage and Azure Data Lake Storage Gen2. In short, there are two different API sets we need to call to integrate with Azure Storage and Azure Data Lake Storage Gen2:
 
 - First, we leverage the Microsoft Entra ID API to authenticate and get an (OAuth 2.0) access token.
-
 - Then, we use the access token to call the Azure Storage API to interact with our storage accounts and its contents.
 
 > [!TIP]
@@ -388,11 +387,11 @@ Although this step is optional, I recommend testing the Azure configuration we j
 
 - In Postman, click the **Azure Storage** collection on the left, and click the **Variables** tab.
 
-<img src="assets/image50.png" style="width:7.5in;height:3.22292in" />
+  <img src="assets/Azure-Storage-2-1-1-01-Azure-Collection.png" style="width:7.5in;height:3.2in" />
 
 - Update the values of the variables **storage-account**, **tenant-id**, **client-id**, and **client-secret** with your own values.
 
-<img src="assets/image51.png" style="width:7.5in;height:3.22292in" />
+  <img src="assets/Azure-Storage-2-1-1-02-Azure-Variables.png" style="width:7.5in;height:3.2in" />
 
 #### 2.1.2 – Test Authentication
 
@@ -400,48 +399,43 @@ First, we review the first API request, which we use to authenticate and get an 
 
 - In Postman, expand the **Authentication** folder, click the **Get Access Token** request, and click the **Headers** tab.
 
-<img src="assets/image52.png" style="width:7.5in;height:3.75833in" />
+  <img src="assets/Azure-Storage-2-1-2-01-Access-Token-Request.png" style="width:7.5in;height:3.8in" />
 
 - Review the screen capture below.
 
-<img src="assets/image53.png" style="width:7.5in;height:3.75833in" />
+  <img src="assets/Azure-Storage-2-1-2-02-Access-Token-Headers.png" style="width:7.5in;height:3.8in" />
 
-- First, I want to point that I use a Post method. In short, the older version of this API uses a Post whereas the most recent uses a Get (with some other changes).
-
-- Second, review the URI and notice the *{{tenantId}}* variable. Obviously, we are executing this request and authenticating using our tenant id.
-
-- Finally, review the headers and note that Postman auto-generated all of them. More importantly, I did not add any additional ones.
+  - First, I want to point that I use a Post method. In short, the older version of this API uses a Post whereas the most recent uses a Get (with some other changes).
+  - Second, review the URI and notice the *{{tenantId}}* variable. Obviously, we are executing this request and authenticating using our tenant id.
+  - Finally, review the headers and note that Postman auto-generated all of them. More importantly, I did not add any additional ones.
 
 - Click the **Body** tab and review the screen capture below.
 
-<img src="assets/image54.png" style="width:7.5in;height:3.22292in" />
+  <img src="assets/Azure-Storage-2-1-2-03-Access-Token-Body.png" style="width:7.5in;height:3.2in" />
 
-- Per the screen capture, the mime type is *application/x-www-form-urlencoded*, (obviously dictated by the Microsoft Entra ID API).
-
-- The body is the second part required to authenticate and get an (OAuth 2.0) access token from Microsoft Entra ID (the first part was the tenant id URI parameter). The key-value pairs include:
+- Per the screen capture, the mime type is `application/x-www-form-urlencoded`, and the body contains four key-value pairs:
 
 - **client_id**, which represents the client application we registered in step 1.3.1. We also copied its value in step 1.3.1.
-
 - **client_secret**, which represents the client secret we created in step 1.3.2. Similarly, we copied its value in step 1.3.2.
-
 - **resource**, which specifies the Azure resource we want to access.
-
 - **grant_type**, which is set to **client_credentials** since we are using a service principal and not a user.
 
 - Once done reviewing, execute this request by clicking the **Send** button.
 
+  <img src="assets/Azure-Storage-2-1-2-04-Access-Token-Send.png" style="width:7.5in;height:3.2in" />
+
 - Microsoft Entra ID returns an HTTP status of 200 and an access token if our Azure and Postman configurations are valid. More importantly, this request's URI, headers, and body guide the configuration of the associated HTTP request in our Mule application.
 
-<img src="assets/image55.png" style="width:7.5in;height:6.07083in" />
+  <img src="assets/Azure-Storage-2-1-2-05-Access-Token-Executed.png" style="width:7.5in;height:6.1in" />
 
-> [!NOTE]
-> The value of the **expires_in** property is in seconds. Hence, the access token we just received is valid for an hour.
+  > [!NOTE]
+  > The value of the **expires_in** property is in seconds. Hence, the access token we just received is valid for an hour.
 
-- While here, copy the value of the *access_token* from the response you just got and paste it into the relevant variable in preparation for the next steps.
+  Copy the value of the *access_token* from the response you just got.
 
-- Click the **Azure Event Hubs** tab and paste the **access_token** value into the **accessToken** variable.
+- Click the **Azure Storage** tab and paste the **access_token** value into the **accessToken** variable.
 
-<img src="assets/image56.png" style="width:7.5in;height:3.22292in" />
+<img src="assets/Azure-Storage-2-1-2-06-Access-Token-Variable.png" style="width:7.5in;height:3.2in" />
 
 Postman is all set to start interacting with Azure Storage, at least until our access token expires.
 
@@ -453,53 +447,43 @@ First, we review the request to create a block blob and its configuration and th
 
 - Expand the **Blob Storage** folder, click the **Create Block Blob** request, and review its URI.
 
-<img src="assets/image57.png" style="width:7.5in;height:2.15208in" />
+  <img src="assets/Azure-Storage-2-1-3-01-Put-Blob-URI.png" style="width:7.5in;height:2.2in" />
 
-- First, I want to point that the Azure API exposes a Put method (instead of a Post) as it supports creating a new blob or updating its content if it already exists.
+  - First, I want to point that the Azure API exposes a Put method (instead of a Post) as it supports creating a new blob or updating its content if it already exists.
+  - Second, review the URI and notice the *{{storage-account}}* variable. Obviously, we are executing this request against our storage account.
+  - Also notice that I hardcoded two URI parameters. Naturally, I could use variables in Postman. Regardless:
 
-- Second, review the URI and notice the *{{storage-account}}* variable. Obviously, we are executing this request against our storage account.
-
-- Also notice that I hardcoded two URI parameters. Naturally, I could use variables in Postman. Regardless:
-
-- **contact-data/** represents the name of the storage container I created in step 1.2.2. I could as well specify something like **contact-data/salesforce/2023/**, for example. In other words, in my example, I am specifying two subdirectories (**salesforce/2023**), which Azure Storage will create within the storage container if they do not exist.
-
-- **blob01.json** represents the name of the blob to create.
+    - **contact-data/** represents the name of the storage container I created in step 1.2.2. I could as well specify something like **contact-data/salesforce/2023/**, for example. In other words, in my example, I am specifying two subdirectories (**salesforce/2023**), which Azure Storage will create within the storage container if they do not exist.
+    - **blob01.json** represents the name of the blob to create.
 
 - Now, click the **Headers** tab and review the headers.
 
-<img src="assets/image58.png" style="width:7.5in;height:3.75278in" />
+  <img src="assets/Azure-Storage-2-1-3-02-Put-Blob-Headers.png" style="width:7.5in;height:3.8in" />
 
-- In the screen capture, the headers in the green box are default ones generated by Postman for this specific request.
+  - In the screen capture, the headers in the green box are default ones generated by Postman for this specific request.
+  - The headers in the red box are ones that I had to specify as per Azure’s documentation, which you can read here: <https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob>.
+    - **Authorization** (obviously) represents our (bearer) access token.
+    - **x-ms-version** represents the API version, which, sadly, is not trivial to uncover in Azure’s documentation. I do not recall where I grabbed this specific version.
+    - **x-ms-blob-type** represents the type of blob to create – i.e., append, block, or page. You can read more about the blob types here: <https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs>.
 
-- The headers in the red box are ones that I had to specify as per Azure’s documentation, which you can read here: <https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob>.
-
-- **Authorization** (obviously) represents our (bearer) access token.
-
-- **x-ms-version** represents the API version, which, sadly, is not trivial to uncover in Azure’s documentation. I do not recall where I grabbed this specific version.
-
-- **x-ms-blob-type** represents the type of blob to create – i.e., append, block, or page. You can read more about the blob types here: <https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs>.
-
-> [!IMPORTANT]
-> As of this writing, this guide, my Postman collection, and sample Mule project only cover Block Blobs. More to the point, Azure documentation includes section dedicated to each type of blob as creating append and page blobs require additional steps.
-
-1)  Append blobs: <https://learn.microsoft.com/en-us/rest/api/storageservices/operations-on-append-blobs>
-
-2)  Block blobs: <https://learn.microsoft.com/en-us/rest/api/storageservices/operations-on-block-blobs>
-
-3)  Page blobs: <https://learn.microsoft.com/en-us/rest/api/storageservices/operations-on-page-blobs>
+  > [!NOTE]
+  > As of this writing, this guide, my Postman collection, and sample Mule project only cover Block Blobs. More to the point, Azure documentation includes section dedicated to each type of blob as creating append and page blobs require additional steps.
+  > 1)  Append blobs: <https://learn.microsoft.com/en-us/rest/api/storageservices/operations-on-append-blobs>
+  > 2)  Block blobs: <https://learn.microsoft.com/en-us/rest/api/storageservices/operations-on-block-blobs>
+  > 3)  Page blobs: <https://learn.microsoft.com/en-us/rest/api/storageservices/operations-on-page-blobs>
 
 - Next, click the **Body** tab, and as you see, I pasted some simple JSON object, which is what will be stored in the block blob.
 
-<img src="assets/image59.png" style="width:7.5in;height:3.22292in" />
+  <img src="assets/Azure-Storage-2-1-3-03-Put-Blob-Body.png" style="width:7.5in;height:3.2in" />
 
 - Finally, click the **Send** button.
 
-<img src="assets/image60.png" style="width:7.5in;height:4.29306in" />
+  <img src="assets/Azure-Storage-2-1-3-04-Put-Blob-Created.png" style="width:7.5in;height:4.3in" />
 
-Azure Storage returns an HTTP status of 201 (and no response body) if our Azure and Postman configurations are valid. More importantly, the request's URI parameters, query parameter, headers, and body guide the configuration of the associated HTTP request in our Mule application.
+  Azure Storage returns an HTTP status of 201 (and no response body) if our Azure and Postman configurations are valid. More importantly, the request's URI parameters, query parameter, headers, and body guide the configuration of the associated HTTP request in our Mule application.
 
-> [!NOTE]
-> You can update the body and execute the request again. Azure will replace the content of the blob with the new body – i.e., it does not append the content. It will still return a simple HTTP 201 status without a body – i.e., without any indication that it updated the blob instead of creating it.
+  > [!NOTE]
+  > You can update the body and execute the request again. Azure will replace the content of the blob with the new body – i.e., it does not append the content. It will still return a simple HTTP 201 status without a body – i.e., without any indication that it updated the blob instead of creating it.
 
 #### 2.1.4 – (Optional) Test Listing Blobs
 
@@ -507,102 +491,97 @@ I added the List Blobs request in Postman to support testing creating blobs with
 
 - Optionally, click on the **List Blobs** request and execute it.
 
-<img src="assets/image61.png" style="width:7.5in;height:6.07083in" />
+  <img src="assets/Azure-Storage-2-1-4-01-List-Container.png" style="width:7.5in;height:6.1in" />
 
-As per the screen capture, this request lists the content of the **contact-data** storage container (as specified by the URI parameter).
+  As per the screen capture, this request lists the content of the **contact-data** storage container (as specified by the URI parameter).
 
-#### 2.1.4 – (Optional) Test Getting a Blob
+#### 2.1.5 – (Optional) Test Getting a Blob
 
 - Optionally, click on the **Get Blob** request and execute it.
 
-<img src="assets/image62.png" style="width:7.5in;height:6.07083in" />
+  <img src="assets/Azure-Storage-2-1-5-01-Get-Blob.png" style="width:7.5in;height:6.1in" />
 
-As per the screen capture and implied in the request’s name, this request gets the content of **blob blob01.json** within the **contact-data** storage container (as specified by the implied URI parameters).
+  As per the screen capture and implied in the request’s name, this request gets the content of **blob blob01.json** within the **contact-data** storage container (as specified by the implied URI parameters).
 
-## Step 5 – Implement Mule Application
+## Part 3 – Review Implementation
 
-In this section, I assume you cloned my Anypoint Studio project from GitHub and imported it. As such, I intentionally do not include XML snippets as I described the implementation. You can find my Anypoint Studio project in the following repository: <https://github.com/abelisle-mulesoft/azure-storage-sapi-example>.
+In this section, I assume you cloned my Anypoint Studio project from GitHub and imported it. As such, I intentionally do not include XML snippets as I described the implementation.
 
 > [!NOTE]
-> I implemented only the critical components in my Studio project while keeping it as simple as possible. In short, you call the Post method of the *block-blobs* resource, and it creates (or updates) a block blob in Azure Storage and sets it’s content to the object you include in the request body. It is as simple as that.
+> I implemented only the critical components in my Studio project while keeping it as simple as possible. In short, you call the Post method of the `block-blobs` resource, and it creates (or updates) a block blob in Azure Storage and sets it’s content to the object you include in the request body. It is as simple as that.
 
 > [!IMPORTANT]
-> I increased log verbosity to Trace in my Studio project for convenience. You might want to update the file *src/main/resources/log4j2.xml* if you plan to leverage my project for your own implementation.
+> I increased log verbosity to Trace in my Studio project for convenience. You might want to update the file `src/main/resources/log4j2.xml` if you plan to leverage my project for your own implementation.
 
 - First, I created this project by importing a simplistic API specification to benefit from the scaffolding. You can find the API specification within the project.
 
-<img src="assets/image63.png" style="width:7.5in;height:3.41319in" />
+  <img src="assets/Azure-Storage-3-1-01-API-Spec.png" style="width:7.5in;height:3.4in" />
 
 - Naturally, I leverage a properties file in YAML format, but I named it to support having an environment specific file – e.g., **mule-props-\<environment\>**.
 
-<img src="assets/image64.png" style="width:7.5in;height:4.77778in" />
+  <img src="assets/Azure-Storage-3-1-02-Props-File.png" style="width:7.5in;height:4.8in" />
 
 > [!IMPORTANT]
 > As per infosec best practices, I did not commit my development properties file to GitHub as it contains sensitive information. However, I provided a template to enable you to create one specific to your own implementation and Azure resources.
 
 - I leveraged three Mule configuration files as per MuleSoft best practices.
 
-<img src="assets/image65.png" style="width:2.73in;height:3.08in" />
+  <img src="assets/Azure-Storage-3-1-03-Mule-Config-Files.png" style="width:2.7in;height:3.1in" />
 
-- In the **global.xml** file, notice the following two global configuration elements.
+- In the **global.xml** file, first, notice the global property that specifies the current environment as per best practices.
 
-- First, I defined a global property that specifies the current environment as per best practices.
-
-<img src="assets/image66.png" style="width:7.5in;height:6.47917in" />
+  <img src="assets/Azure-Storage-3-1-04-Global-Env-Prop.png" style="width:7.5in;height:6.5in" />
 
   > [!TIP]
   > If you are not familiar with this practice, we typically override this property when deploying our application to higher environments (e.g., test, QA, prod), which results in picking up the properties file specific to that environment.
 
-- Second, I configured my **Configuration properties** element accordingly.
+- Then, notice I configured my **Configuration properties** element accordingly.
 
-<img src="assets/image67.png" style="width:4.27in;height:4.25in" />
+  <img src="assets/Azure-Storage-3-1-05-Props-Filename.png" style="width:4.3in;height:4.3in" />
 
-- In the **azure-storage-sapi.xml** file, notice the error handlers.
+- In the **azure-storage-sapi.xml** file, notice the error handlers. First, I renamed the `Transform Message` components as I prefer meaningful names.
 
-- First, I renamed the Transform Message components as I prefer meaningful names.
-
-<img src="assets/image68.png" style="width:6.13in;height:5.45in" />
+  <img src="assets/Azure-Storage-3-1-06-Error-Handling.png" style="width:6.1in;height:5.5in" />
 
 - Then, I added a catch all error handler, which is a practice I learned while working on a project reviewed by the Global SE Team.
 
-<img src="assets/image69.png" style="width:6.13in;height:3.41in" />
+  <img src="assets/Azure-Storage-3-1-07-Error-Handler-Any.png" style="width:6.1in;height:3.4in" />
 
-- Finally, I use a (more) comprehensive body when returning errors in all my APIs. The JSON “structure” you see here is influenced by API specifications and fragments published in Anypoint Exchange – e.g. accelerators.
+- Finally, I use a (more) comprehensive response body in all my APIs. The JSON “structure” you see here is influenced by API specifications and fragments published in Anypoint Exchange – e.g. accelerators.
 
-<img src="assets/image70.png" style="width:6.13in;height:2.73in" />
+  <img src="assets/Azure-Storage-3-1-08-Error-Body.png" style="width:6.1in;height:2.7in" />
 
-> [!NOTE]
-> Refer to section [Error Payload Example](#error-payload-example) in the appendix for more information about my default error body.
+  > [!NOTE]
+  > Refer to section [Error Payload Example](#error-payload-example) in the appendix for more information about my default error body.
 
-- The **azure-storage-sapi-impl.xml** file includes two flows.
+- The **azure-storage-sapi-impl.xml** file includes two flows. The first, as its name implies, implements the logic to get an access token from Microsoft Entra ID.
 
-- The first, as its name implies, implements the logic to get an access token from Microsoft Entra ID.
+  <img src="assets/Azure-Storage-3-1-09-Authentication-Flow.png" style="width:5.1in;height:2.2in" />
 
-<img src="assets/image71.png" style="width:5.1in;height:2.22in" />
+  Notice the **On Error Propagate** and **Logger** components (refer to the screen capture of the flow above). I added them to log the entire payload Microsoft Entra ID returns when throwing an error to help troubleshoot issues. It is often (but not always) helpful.
 
-- First, it creates the request body, which is very similar to the one we reviewed in step 4. Naturally, I leverage properties where practical.
+- This flow creates the request body, which is very similar to the one we reviewed in section **2.1.2 – Test Authentication**. Naturally, I leverage properties where practical.
 
-> <img src="assets/image72.png" style="width:6.13in;height:2.73in" />
+  <img src="assets/Azure-Storage-3-1-10-Authen-Transform.png" style="width:6.1in;height:2.7in" />
 
 - Then, it calls the Microsoft Entra ID API to get an access token. As implied in the following screen capture, its configuration is inherited from the associated HTTP Request Configuration global element. As reviewed in step 4, this API does not expect any specific header and query parameter. I arbitrarily included the URI parameter in the base path in the associated HTTP Request Configuration global element.
 
-> <img src="assets/image73.png" style="width:6.81in;height:4.09in" />
-
-- Notice the **On Error Propagate** and **Logger** components (refer to the screen capture of the flow above). I added them to log the entire payload Microsoft Entra ID returns when throwing an error to help troubleshoot issues. It is often (but not always) helpful.
+  <img src="assets/Azure-Storage-3-1-11-Authen-Request.png" style="width:6.8in;height:4.1in" />
 
 - The second flow, as it’s name implies, implements the logic to create (or update) a block blob in Azure Storage.
 
-<img src="assets/image74.png" style="width:7.25in;height:2.04in" />
+  <img src="assets/Azure-Storage-3-1-12-Post-Block-Blob-Flow.png" style="width:7.3in;height:2.0in" />
 
-- The logic is relatively self-intuitive (I assume I did a good job with the component names ) but I need to highlight one difference in implementing the Request component compared to its Postman equivalent. More specifically, in the Headers, I learned the hard way that you must include the Content-Length; it is auto-generated in Postman and we do not need to worry about it. If you do not include it, the Azure storage API throws a bad request (HTTP status 400) with an error type of *UnsupportedHeader* and the following error message “*One of the HTTP headers specified in the request isn't supported*” (5). I spent a lot of time troubleshooting this issue in the proof of concept as the error type and error message are misleading.
+- The logic is relatively self-intuitive (I assume I did a good job with the component names) but I need to highlight one difference in implementing the `Request` component compared to its Postman equivalent. More specifically, in the `Headers`, I learned the hard way that you must include the `Content-Length`; it is auto-generated in Postman and we do not need to worry about it. If you do not include it, the Azure storage API throws a bad request (HTTP status 400) with an error type of *UnsupportedHeader* and the following error message “*One of the HTTP headers specified in the request isn't supported*” (5). I spent a lot of time troubleshooting this issue in the proof of concept as the error type and error message are misleading.
 
-> <img src="assets/image75.png" style="width:6.13in;height:4.09in" />
+  <img src="assets/Azure-Storage-3-1-13-Post-Block-Blob-Request.png" style="width:6.1in;height:4.1in" />
+
 
 # Appendix
 
 ## Comprehensive Response
 
-As stated and illustrated in section **2.2 – Review Azure Event Hubs SAPI Example**, I use a (more) comprehensive body in all my APIs. Following is an example of the payload returned when an error occurs.
+As stated and illustrated in section **Part 3 – Review Implementation**, I use a (more) comprehensive response body in all my APIs. Following is an example of the payload returned when an error occurs.
 
 ```json
 {
@@ -631,9 +610,9 @@ Following is more information about the properties.
 | errorType:       | Y             | Error type.                                                                                                                                                                                                                                  |
 | responseStatus:  | N             | Optional property that indicates the overall status of the operation (e.g., SUCCESS, WARNING, ERROR).                                                                                                                                        |
 | responseDetails: | N             | Optional array, which is a structure for providing additional details to a response returned by an API.                                                                                                                                      |
-| severity:        | N             | Indicates the severity of this responseDetails.message (i.e., INFO, WARNING, ERROR).                                                                                                                                                         |
-| code:            | N             | Represents an optional alphanumeric code that uniquely identifies this message. We included this property to support cataloging messages and provide additional information such as comprehensive descriptions, mitigation, workaround, etc. |
-| message:         | N             | Represents the short text or description of this `responseDetails.message`.
+|   severity:        | N             | Indicates the severity of this responseDetails.message (i.e., INFO, WARNING, ERROR).                                                                                                                                                         |
+|   code:            | N             | Represents an optional alphanumeric code that uniquely identifies this message. We included this property to support cataloging messages and provide additional information such as comprehensive descriptions, mitigation, workaround, etc. |
+|   message:         | N             | Represents the short text or description of this `responseDetails.message`.
 
 ## References
 
